@@ -1,91 +1,132 @@
---create schema main
---create schema map
+CREATE SCHEME common;
+CREATE SCHEME game;
 
---create type access_type as enum ('user', 'master', 'author');
---create type object_state as enum ('under constuction', 'ready', 'busy')
-
-create table main.user 
+CREATE TABLE common.user 
 (
-	login text primary key,
-	password_hash bigint,	--IMPORTANT
-	access_level access_type NOT NULL
+	id SERIAL PRIMARY KEY,
+	pwd_hash BIGINT,
+	username TEXT,
+	email TEXT
 );
 
-create table main.setting
+CREATE TABLE common.group 
 (
-	setting_name text primary key,
-	author_id text REFERENCES main.user (login),
-	setting_state object_state not null
+	id SERIAL,
+	name TEXT 
 );
 
-create table main.game
+CREATE TABLE common.permission
 (
-	game_id uuid primary key,
-	setting_id text REFERENCES main.setting (setting_name),
-	master_id text REFERENCES main.user (login),
-	game_state object_state not null
+	id INTEGER PRIMARY KEY,
+	code_name TEXT
+)
+
+CREATE TABLE common.user_profile
+(
+	id SERIAL PRIMARY KEY,
+	user_id INTEGER REFERENCES common.user(id),
+	avatar_link TEXT,
+	status INTEGER,
+	last_seen TIMESTAMP
 );
 
-create table map.map
+CREATE TABLE common.friend
 (
-	map_id int primary key,
-	parent_id int references map.map (map_id)
-	map_name text,
-	map_description text
+	user_id1 INTEGER REFERENCES common.user(id),
+	user_id2 INTEGER REFERENCES common.user(id),
+	direction integer,
+	PRIMARY KEY (user_id1, user_id2)
 );
 
-create table map.area_type 
+CREATE TABLE game.game
 (
-	area_type_id serial primary key,
-	type_name text
+	id BIGSERIAL PRIMARY KEY,
+	name TEXT,
+	status BOOLEAN,
+	is_active BOOLEAN,
+	owner_id INTEGER REFERENCES common.USER(id)
 );
 
-create table map.area_shape
+CREATE TABLE game.character
 (
-	area_shape_id serial primary key,
-	shape_name text
+	id BIGSERIAL PRIMARY KEY,
+	game_id BIGINT REFERENCES game.game(id),
+	user_id INTEGER REFERENCES common.user(id),
+	name text,
+	avatar_link text 
 );
 
-create table map.area 
+CREATE TABLE game.trait 
 (
-	area_id serial primary key,
-	map_id int references map.map (map_id) not null,
-	area_type int references map.area_type (area_type_id) not null,
-	area_shape int references map.area_shape (area_shape_id) not null,
-	area_point point not null
+	id BIGSERIAL PRIMARY KEY,
+	game_id BIGINT REFERENCES game.game(id),
+	name text
 );
 
-CREATE INDEX map.area_map ON map.area ( map_id  ASC );
-
-create table map.link_type
+CREATE TABLE game.trait_value
 (
-	link_type_id serial primary key,
-	link_name text
+	id BIGSERIAL,
+	trait_id BIGINT REFERENCES game.trait(id),
+	character_id BIGINT REFERENCES game.character(id),
+	value INTEGER,
+	PRIMARY KEY (id, trait_id)
 );
 
-create table map.link
+CREATE TABLE common.participant
 (
-	link_id serial,
-	area_from_id int references map.area (area_id) not null,
-	area_to_id int references map.area (area_id),
-	map_id int references map.map (map_id) not null,
-	link_type int references map.link_type (link_type_id) not null,
+	id BIGSERIAL PRIMARY KEY,
+	game_id BIGINT REFERENCES game.gema(id),
+	user_id INTEGER REFERENCES common.user(id)
+);
+
+CREATE TABLE game.map
+(
+	id BIGSERIAL PRIMARY KEY,
+	name text,
+	preview_link text,
+	x FLOAT,
+	y FLOAT
+);
+
+CREATE TABLE game.map_copy
+(
+	id BIGSERIAL,
+	name textm
 	description text,
-	primary key (link_id, area_from_id)
+	preview_link text,
+	game_id BIGINT REFERENCES game.geme(id),
+	map_id BIGINT REFERENCES game.map(id),
+	x FLOAT,
+	y FLOAT,
+	PRIMARY KEY (id, map_id)
 );
 
-create table map.object_type
+CREATE TABLE game.effect
 (
-	object_type_id serial primary key,
-	object_name text
+	id BIGSERIAL PRIMARY KEY,
+	effect_key TEXT,
+	start_time TIMESTAMP,
+	end_time TIMESTAMP
 );
 
-create table map.object
+CREATE TABLE game.effect_instance
 (
-	object_id bigint primary key,
-	object_type_id int references map.object_type (object_type_id) not null,
-	parent_id bigint references map.object (object_id),
-	link_id int references map.link (link_id),
-	object_point point,
-	description text
+	id BIGSERIAL PRIMARY KEY,
+	character_id BIGINT REFERENCES game.character(id),
+	effect_id BIGINT REFERENCES game.effect(id),
+	steps_left integer
 );
+
+CREATE TABLE game.area
+(
+	id BIGSERIAL,
+	map_id BIGINT,
+	map_copy_id BIGINT,
+	
+	x INTEGER,
+	y INTEGER,
+)
+CREATE TABLE game.effect_area
+(
+
+)
