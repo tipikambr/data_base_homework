@@ -1,5 +1,5 @@
-CREATE SCHEME common;
-CREATE SCHEME game;
+CREATE SCHEMA common;
+CREATE SCHEMA game;
 
 CREATE TABLE common.user 
 (
@@ -19,7 +19,7 @@ CREATE TABLE common.permission
 (
 	id INTEGER PRIMARY KEY,
 	code_name TEXT
-)
+);
 
 CREATE TABLE common.user_profile
 (
@@ -75,7 +75,7 @@ CREATE TABLE game.trait_value
 CREATE TABLE common.participant
 (
 	id BIGSERIAL PRIMARY KEY,
-	game_id BIGINT REFERENCES game.gema(id),
+	game_id BIGINT REFERENCES game.game(id),
 	user_id INTEGER REFERENCES common.user(id)
 );
 
