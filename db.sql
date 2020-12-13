@@ -120,17 +120,13 @@ CREATE TABLE game.effect_instance
 CREATE TABLE game.area
 (
     id BIGSERIAL,
-    map_id BIGINT,
-    map_copy_id BIGINT,
-    
+    map_id BIGINT REFERENCES game.map(id),
+    map_copy_id BIGINT, 
+
     x INTEGER,
-    y INTEGER
-);
-CREATE TABLE game.area_pattern
-(
-	id SERIAL PRIMARY KEY,
-	area_type_id INTEGER REFERENCES game.area_type(id),
-	pattern INTEGER
+    y INTEGER,
+	FOREIGN KEY (map_id, map_copy_id) REFERENCES game.map_copy(map_id, id), 
+	PRIMARY KEY (id, map_id, map_copy_id)
 );
 
 CREATE TABLE game.area_type
@@ -141,20 +137,38 @@ CREATE TABLE game.area_type
 	effect_id BIGINT REFERENCES game.effect(id)
 );
 
+CREATE TABLE game.area_pattern
+(
+	id SERIAL PRIMARY KEY,
+	area_type_id INTEGER REFERENCES game.area_type(id),
+	pattern INTEGER
+);
+
 CREATE TABLE game.effect_area
 (
 	id BIGSERIAL PRIMARY KEY,
-	area_id BIGINT REFERENCES game.area(id),
+	area_id BIGINT,
+    map_id BIGINT ,
+    map_copy_id BIGINT ,
 	effect_id BIGINT REFERENCES game.effect(id),
+	
+	FOREIGN KEY (area_id, map_id, map_copy_id) REFERENCES game.area(id, map_id, map_copy_id),
 	values FLOAT[]
 );
 
 
 CREATE TABLE game.link_short
 (
-	from_area_id BIGINT REFERENCES game.area(id),
-	to_area_id BIGINT  REFERENCES game.area(id),
-	PRIMARY KEY (from_area_id, to_area_id)
+	from_area_id BIGINT,
+    from_map_id BIGINT,
+    from_map_copy_id BIGINT,
+	to_area_id BIGINT,
+    to_map_id BIGINT,
+    to_map_copy_id BIGINT,
+
+	FOREIGN KEY (from_area_id, from_map_id, from_map_copy_id) REFERENCES game.area(id, map_id, map_copy_id),
+	FOREIGN KEY (to_area_id, to_map_id, to_map_copy_id) REFERENCES game.area(id, map_id, map_copy_id),
+	PRIMARY KEY (from_area_id,from_map_id,from_map_copy_id, to_area_id,to_map_id,to_map_copy_id)
 );
 
 CREATE TABLE game.link_long
@@ -175,8 +189,12 @@ CREATE TABLE game.object
 (
 	id BIGSERIAL,
 	object_type_id INTEGER REFERENCES game.object_type(id),
-	area_id BIGINT REFERENCES game.area(id),
-	orientation FLOAT,
+	area_id BIGINT,
+    map_id BIGINT,
+    map_copy_id BIGINT,
+    orientation FLOAT,
+
+	FOREIGN KEY (area_id, map_id, map_copy_id) REFERENCES game.area(id, map_id, map_copy_id),
 	PRIMARY KEY (id, object_type_id)
 );
 
@@ -188,14 +206,11 @@ CREATE TABLE game.item
 	effect_array TEXT
 );
 
-CREATE TABLE game.item_instance
+CREATE TABLE game.dropped_item
 (
-	id BIGSERIAL,
+	id BIGSERIAL PRIMARY KEY,
 	item_id BIGINT REFERENCES game.item(id),
-	character_id BIGINT REFERENCES game.character(id),
-	prefix_id BIGINT REFERENCES game.prefix(id),
-	postfix_id BIGINT REFERENCES game.postfix(id),
-	equipped BOOLEAN
+	area_id BIGINT
 );
 
 CREATE TABLE game.prefix
@@ -210,6 +225,16 @@ CREATE TABLE game.postfix
 	id BIGSERIAL PRIMARY KEY,
 	name TEXT,
 	effect_array TEXT
+);
+
+CREATE TABLE game.item_instance
+(
+	id BIGSERIAL,
+	item_id BIGINT REFERENCES game.item(id),
+	character_id BIGINT REFERENCES game.character(id),
+	prefix_id BIGINT REFERENCES game.prefix(id),
+	postfix_id BIGINT REFERENCES game.postfix(id),
+	equipped BOOLEAN
 );
 
 CREATE TABLE game.allowed_items
