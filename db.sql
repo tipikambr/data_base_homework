@@ -91,10 +91,10 @@ CREATE TABLE game.map
 CREATE TABLE game.map_copy
 (
 	id BIGSERIAL,
-	name textm
+	name text,
 	description text,
 	preview_link text,
-	game_id BIGINT REFERENCES game.geme(id),
+	game_id BIGINT REFERENCES game.game(id),
 	map_id BIGINT REFERENCES game.map(id),
 	x FLOAT,
 	y FLOAT,
@@ -124,9 +124,9 @@ CREATE TABLE game.area
 	map_copy_id BIGINT,
 	
 	x INTEGER,
-	y INTEGER,
-)
+	y INTEGER
+);
 CREATE TABLE game.effect_area
 (
 
-)
+);

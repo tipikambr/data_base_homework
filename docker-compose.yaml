@@ -5,8 +5,17 @@ services:
         ports:
             - 5532:5432
         volumes:
-            - postgres_data:/var/lib/postgresql/data/
-        env_file:
-            - .env
+            - type: volume
+              source: postgres_data
+              target: /var/lib/postgresql/data/
+            - type: bind
+              source: .
+              target: /source
+              read_only: true
+
+        environment:
+            POSTGRES_DB:        game_helper_db
+            POSTGRES_USER:      postgres
+            POSTGRES_PASSWORD:  postgres
 volumes:
     postgres_data:
