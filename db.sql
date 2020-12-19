@@ -81,23 +81,24 @@ CREATE TABLE common.participant
 
 CREATE TABLE game.map
 (
-    id BIGSERIAL PRIMARY KEY,
-    name text,
+    id           BIGSERIAL PRIMARY KEY,
+    name         text,
     preview_link text,
-    x FLOAT,
-    y FLOAT
+    x            FLOAT,
+    y            FLOAT,
+	pattern      INTEGER
 );
 
 CREATE TABLE game.map_copy
 (
-    id BIGSERIAL,
-    name text,
-    description text,
+    id           BIGSERIAL,
+    name         text,
+    description  text,
     preview_link text,
-    game_id BIGINT REFERENCES game.game(id),
-    map_id BIGINT REFERENCES game.map(id),
-    x FLOAT,
-    y FLOAT,
+    game_id      BIGINT REFERENCES game.game(id),
+    map_id       BIGINT REFERENCES game.map(id),
+    x            FLOAT,
+    y            FLOAT,
     PRIMARY KEY (id, map_id)
 );
 
@@ -117,31 +118,32 @@ CREATE TABLE game.effect_instance
     steps_left integer
 );
 
-CREATE TABLE game.area
-(
-    id BIGSERIAL,
-    map_id BIGINT REFERENCES game.map(id),
-    map_copy_id BIGINT, 
-
-    x INTEGER,
-    y INTEGER,
-	FOREIGN KEY (map_id, map_copy_id) REFERENCES game.map_copy(map_id, id), 
-	PRIMARY KEY (id, map_id, map_copy_id)
-);
-
 CREATE TABLE game.area_type
 (
-	id SERIAL PRIMARY KEY,
-	image_link TEXT,
-	name TEXT,
-	effect_id BIGINT REFERENCES game.effect(id)
+    id          BIGINT,
+    map_id      BIGINT REFERENCES game.map(id),
+    map_copy_id BIGINT,
+	image_link  TEXT,
+	name        TEXT,
+	effect_id   BIGINT REFERENCES game.effect(id),
+    PRIMARY KEY (map_id, map_copy_id, id),
+	FOREIGN KEY (map_id, map_copy_id) REFERENCES game.map_copy(map_id, id),
+    UNIQUE      (map_id, map_copy_id, name)
 );
 
-CREATE TABLE game.area_pattern
+CREATE TABLE game.area
 (
-	id SERIAL PRIMARY KEY,
-	area_type_id INTEGER REFERENCES game.area_type(id),
-	pattern INTEGER
+    id           BIGINT,
+    map_id       BIGINT               REFERENCES game.map(id),
+    map_copy_id  BIGINT,
+    x            INTEGER,
+    y            INTEGER,
+	area_type_id BIGINT,
+	FOREIGN KEY (map_id, map_copy_id) REFERENCES game.map_copy(map_id, id),
+	FOREIGN KEY (map_id, map_copy_id, area_type_id) REFERENCES game.area_type(map_id, map_copy_id, id),
+	PRIMARY KEY (map_id, map_copy_id, id),
+    UNIQUE      (map_copy_id, x, y),
+    UNIQUE      (map_copy_id, id)
 );
 
 CREATE TABLE game.effect_area
