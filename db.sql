@@ -11,7 +11,7 @@ CREATE TABLE common.user
 
 CREATE TABLE common.group 
 (
-    id SERIAL,
+    id SERIAL PRIMARY KEY,
     name TEXT 
 );
 
@@ -37,6 +37,20 @@ CREATE TABLE common.friend
     direction integer,
     PRIMARY KEY (user_id1, user_id2)
 );
+
+CREATE TABLE common.user_to_group
+(
+    user_id INTEGER REFERENCES common.user(id),
+    group_id INTEGER REFERENCES common.group(id),
+    PRIMARY KEY (user_id, group_id)
+);
+
+CREATE TABLE common.permission_to_group
+(
+    group_id INTEGER REFERENCES common.group(id),
+    permission_id INTEGER REFERENCES common.permission(id),
+    PRIMARY KEY (group_id, permission_id)
+); 
 
 CREATE TABLE game.game
 (
@@ -243,3 +257,4 @@ CREATE TABLE game.allowed_items
 	game_id BIGINT REFERENCES game.game(id),
 	PRIMARY KEY (item_id, game_id)
 );
+
