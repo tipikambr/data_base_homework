@@ -164,6 +164,17 @@ CREATE OR REPLACE FUNCTION game.remove_character_trait(id_character BIGINT, id_t
     $$
     LANGUAGE SQL;
 
+CREATE OR REPLACE FUNCTION game.get_character_traits(id_character BIGINT) RETURNS TABLE(trait_id BIGINT,
+trait_name TEXT, trait_value int)
+    AS
+    $$
+        SELECT tt.id AS trait_id, tt.name AS trait_name, tv.value AS trait_value
+        FROM game.trait_value AS tv, game.trait AS tt
+            WHERE tv.character_id = id_character AND
+                  tv.trait_id = tt.id;
+    $$
+    LANGUAGE SQL;
+
 /*
 --------------------------------------------------------------------------------
                                     Character view edit
