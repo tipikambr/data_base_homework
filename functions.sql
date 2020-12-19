@@ -50,6 +50,12 @@ CREATE OR REPLACE FUNCTION common.get_incoming_friend_requests(_id int) RETURNS 
 
     $$
     LANGUAGE SQL;
+
+/*
+--------------------------------------------------------------------------------
+                                    Friend
+--------------------------------------------------------------------------------
+*/
     
     
 /*
@@ -107,6 +113,140 @@ CREATE OR REPLACE FUNCTION common.get_all_permissions(id_user int) RETURNS TABLE
 
 /*
 --------------------------------------------------------------------------------
-                                    Friend
+                                    Permissions
 --------------------------------------------------------------------------------
 */
+
+/*
+--------------------------------------------------------------------------------
+                                    Character view edit
+--------------------------------------------------------------------------------
+*/
+
+CREATE OR REPLACE FUNCTION game.get_character(id_game BIGINT, id_user INTEGER) RETURNS TABLE (LIKE game.character)
+    AS
+    $$
+        SELECT * FROM game.character
+            WHERE game.character.game_id = id_game AND game.character.user_id = id_user;
+    $$
+    LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION game.get_characters(id_game BIGINT) RETURNS TABLE (LIKE game.character)
+    AS
+    $$
+        SELECT * FROM game.character
+            WHERE game.character.game_id = id_game;
+    $$
+    LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION game.set_character_trait(id_character BIGINT, id_trait BIGINT, value_trait int) RETURNS VOID
+    AS
+    $$
+        UPDATE game.trait_value
+            SET value = value_trait
+            WHERE trait_id = id_trait AND character_id = id_character;
+    $$
+    LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION game.add_character_trait(id_character BIGINT, id_trait BIGINT, value_trait int) RETURNS VOID
+    AS
+    $$
+        INSERT INTO game.trait_value (character_id, trait_id, value) VALUES
+        (id_character, id_trait, value_trait);
+    $$
+    LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION game.remove_character_trait(id_character BIGINT, id_trait BIGINT) RETURNS VOID
+    AS
+    $$
+        DELETE FROM game.trait_value
+            WHERE character_id = id_character AND trait_id = id_trait;
+    $$
+    LANGUAGE SQL;
+
+/*
+--------------------------------------------------------------------------------
+                                    Character view edit
+--------------------------------------------------------------------------------
+*/
+
+
+/*
+--------------------------------------------------------------------------------
+                                    User profile
+--------------------------------------------------------------------------------
+ */
+
+CREATE OR REPLACE FUNCTION common.set_user_status(id_user int, status_user int) RETURNS VOID
+    AS
+    $$
+        UPDATE common.user_profile
+            SET status = status_user
+            WHERE user_id = id_user;
+    $$
+    LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION common.get_user_status(id_user int) RETURNS int
+    AS
+    $$
+        SELECT status FROM common.user_profile
+            WHERE user_id = id_user;
+    $$
+    LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION common.set_user_avatar(id_user int, link_avatar TEXT) RETURNS VOID
+    AS
+    $$
+        UPDATE common.user_profile
+            SET avatar_link = link_avatar
+            WHERE user_id = id_user;
+    $$
+    LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION common.get_user_avatar(id_user int) RETURNS TEXT
+    AS
+    $$
+        SELECT avatar_link FROM common.user_profile
+            WHERE user_id = id_user;
+    $$
+    LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION common.set_user_last_presence(id_user int, seen_last TIMESTAMP) RETURNS VOID
+    AS
+    $$
+        UPDATE common.user_profile
+            SET last_seen = seen_last
+            WHERE user_id = id_user;
+    $$
+    LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION common.get_user_last_presence(id_user int) RETURNS TIMESTAMP
+    AS
+    $$
+        SELECT last_seen FROM common.user_profile
+            WHERE user_id = id_user;
+    $$
+    LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION common.get_games_user_owns(id_user int) RETURNS TABLE(LIKE game.game)
+    AS
+    $$
+        SELECT * FROM game.game
+            WHERE owner_id = id_user;
+    $$
+    LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION common.get_games_user_plays(id_user int)  RETURNS TABLE(LIKE game.game)
+    AS
+    $$
+        SELECT * FROM game.game AS g
+            WHERE EXISTS (SELECT * FROM common.participant AS p
+                            WHERE p.user_id = id_user AND g.id = p.game_id);
+    $$
+    LANGUAGE SQL;
+
+/*
+--------------------------------------------------------------------------------
+                                    User profile
+--------------------------------------------------------------------------------
+ */
