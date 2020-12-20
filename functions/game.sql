@@ -2,6 +2,14 @@
                                     Game
 ------------------------------------------------------------------------------*/
 
+-- List of Games
+CREATE OR REPLACE FUNCTION game.get_games (
+) RETURNS TABLE (LIKE game.game) LANGUAGE plpgsql AS $$
+BEGIN
+    SELECT * FROM game.game;
+END;
+$$;
+
 -- Create game
 CREATE OR REPLACE FUNCTION game.create_game(
         owner        int,

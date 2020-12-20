@@ -102,7 +102,7 @@ CREATE TABLE game.character
 CREATE TABLE game.trait 
 (
     id      bigserial PRIMARY KEY,
-    game_id bigint REFERENCES game.game(id),
+    game_id bigint    REFERENCES game.game(id) ON DELETE CASCADE,
     name    text,
     UNIQUE (game_id, name)
 );
@@ -262,7 +262,7 @@ CREATE TABLE game.item
 	id           bigserial PRIMARY KEY,
 	name         text,
 	description  text,
-	effect_array text
+	effect_array jsonb
 );
 
 CREATE TABLE game.dropped_item

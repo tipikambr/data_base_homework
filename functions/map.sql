@@ -1,9 +1,9 @@
 /*------------------------------------------------------------------------------
-                                    Local map editor
+                                    Map
 ------------------------------------------------------------------------------*/
 
 -- Add a cell
-CREATE OR REPLACE FUNCTION game.add_cell(
+CREATE OR REPLACE FUNCTION game.add_cell (
             map_id       bigint,
             map_copy_id  bigint,
             x            integer,
@@ -37,7 +37,7 @@ END;
 $$;
 
 -- Add a cell (area_type_name)
-CREATE OR REPLACE FUNCTION game.add_cell(
+CREATE OR REPLACE FUNCTION game.add_cell (
             map_id         bigint,
             map_copy_id    bigint,
             x              integer,
@@ -71,7 +71,7 @@ END;
 $$;
 
 -- Update a cell
-CREATE OR REPLACE FUNCTION game.update_cell(
+CREATE OR REPLACE FUNCTION game.update_cell (
             map_id       bigint,
             map_copy_id  bigint,
             cell_id      bigint,
@@ -96,7 +96,7 @@ END;
 $$;
 
 -- Update a cell (with area_type_name)
-CREATE OR REPLACE FUNCTION game.update_cell(
+CREATE OR REPLACE FUNCTION game.update_cell (
             map_id         bigint,
             map_copy_id    bigint,
             cell_id        bigint,
@@ -121,7 +121,7 @@ END;
 $$;
 
 -- Get local map
-CREATE OR REPLACE FUNCTION game.get_local_map(
+CREATE OR REPLACE FUNCTION game.get_local_map (
         _map_id bigint
 ) RETURNS TABLE (LIKE game.map) LANGUAGE plpgsql AS $$
 BEGIN
@@ -132,19 +132,48 @@ END;
 $$;
 
 -- Get all cells for a local map
-CREATE OR REPLACE FUNCTION game.get_local_map_cells(
-        _map_id bigint
+CREATE OR REPLACE FUNCTION game.get_map_cells (
+    _map_id bigint
 ) RETURNS TABLE (LIKE game.area) LANGUAGE plpgsql AS $$
 BEGIN
     SELECT game.area.*
     FROM game.area a
-    WHERE a.map_id = _map_id;
+    WHERE a.map_id = _map_id AND a.map_copy_id IS NULL;
 END;
 $$;
 
--- TODO: get all cells for a local map copy (copy exclusive)
--- TODO: get all cells for a local map copy (original + copy override by (x,y))
--- TODO: add object to a cell
+-- get all cells for a local map copy (copy exclusive)
+CREATE OR REPLACE FUNCTION game.get_map_copy_cells (
+    map_id      bigint,
+    map_copy_id bigint
+) RETURNS TABLE (LIKE game.area) LANGUAGE plpgsql AS $$
+BEGIN
+    SELECT game.area.*
+    FROM game.area a
+    WHERE a.map_id = map_id AND a.map_copy_id = map_copy_id;
+END;
+$$;
+
+-- get all cells for a local map copy (original + copy override by (x,y))
+CREATE OR REPLACE FUNCTION game.get_map_copy_cells (
+    map_id      bigint,
+    map_copy_id bigint
+) RETURNS TABLE (LIKE game.area) LANGUAGE plpgsql AS $$
+BEGIN
+    WITH overriden_areas AS (
+        SELECT *
+        FROM game.area a
+        WHERE a.map_id = map_id AND a.map_copy_id = map_copy_id
+    )
+    SELECT
+        (CASE WHEN overriden_areas.id IS NULL THEN ar.* ELSE overriden_areas.* END)
+    FROM game.area ar
+    FULL OUTER JOIN overriden_areas
+        ON ar.x = overriden_areas.x AND ar.y = overriden_areas.y
+    WHERE ar.map_id = map_id AND ar.map_copy_id IS NULL;
+END;
+$$;
+
 
 -- Add a Short link (a link between cells)
 CREATE OR REPLACE FUNCTION game.create_short_link (
@@ -179,7 +208,7 @@ END;
 $$;
 
 -- Delete a Short link (a link between cells)
-CREATE OR REPLACE FUNCTION game.delete_short_link(
+CREATE OR REPLACE FUNCTION game.delete_short_link (
 	_from_area_id     bigint,
     _from_map_id      bigint,
     _from_map_copy_id bigint,
@@ -215,7 +244,7 @@ END;
 $$;
 
 -- Add an object for a cell
-CREATE OR REPLACE FUNCTION game.add_object(
+CREATE OR REPLACE FUNCTION game.add_object (
             map_id         bigint,
             map_copy_id    bigint,
             area_id        bigint,
@@ -248,7 +277,7 @@ END;
 $$;
 
 -- Delete an object
-CREATE OR REPLACE FUNCTION game.delete_short_link(
+CREATE OR REPLACE FUNCTION game.delete_short_link (
     object_id bigint
 ) RETURNS VOID LANGUAGE plpgsql AS $$
 BEGIN
@@ -275,7 +304,7 @@ $$;
 -- TODO: CRUD item
 
 -- Add a Dropped Item
-CREATE OR REPLACE FUNCTION game.add_dropped_item(
+CREATE OR REPLACE FUNCTION game.add_dropped_item (
             map_id      bigint,
             map_copy_id bigint,
             area_id     bigint,
@@ -306,7 +335,7 @@ END;
 $$;
 
 -- Delete a Dropped Item
-CREATE OR REPLACE FUNCTION game.delete_dropped_item(
+CREATE OR REPLACE FUNCTION game.delete_dropped_item (
     d_item_id bigint
 ) RETURNS VOID LANGUAGE plpgsql AS $$
 BEGIN
