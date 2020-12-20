@@ -2,19 +2,19 @@
                                     Character view edit
 ------------------------------------------------------------------------------*/
 
-CREATE OR REPLACE FUNCTION game.get_character(id_game BIGINT, id_user INTEGER) RETURNS TABLE (LIKE game.character)
+CREATE OR REPLACE FUNCTION game.get_character(session_id BIGINT, id_user INTEGER) RETURNS TABLE (LIKE game.character)
     AS
     $$
         SELECT * FROM game.character
-            WHERE game.character.game_id = id_game AND game.character.user_id = id_user;
+            WHERE game.character.session_id = session_id AND game.character.user_id = id_user;
     $$
     LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION game.get_characters(id_game BIGINT) RETURNS TABLE (LIKE game.character)
+CREATE OR REPLACE FUNCTION game.get_characters(session_id BIGINT) RETURNS TABLE (LIKE game.character)
     AS
     $$
         SELECT * FROM game.character
-            WHERE game.character.game_id = id_game;
+            WHERE game.character.session_id = session_id;
     $$
     LANGUAGE SQL;
 

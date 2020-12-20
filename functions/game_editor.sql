@@ -52,44 +52,59 @@ BEGIN
 END;
 $$;
 
--- Create a local map
-
-
--- Add a local map
-/*
-Requires DB restructuring:
-    - Create Room / GameSession table
-    - Take out some functionality of Game, assign it to GameSession
-*/
-CREATE OR REPLACE FUNCTION game.add_map(
-            map_id       bigint,
-            x            integer,
-            y            integer,
-            preview_link text,
-            pattern      integer,
-        OUT ret_id       bigint
+-- Create a map
+CREATE OR REPLACE FUNCTION game.create_map(
+        name         text,
+        description  text,
+        preview_link text,
+        x            integer,   -- position on the global map
+        y            integer,   -- position on the global map
+        pattern      integer,   -- cell shape (e.g. 6 for hexagone)
+    OUT ret_id       bigint
 ) LANGUAGE plpgsql AS $$
 BEGIN
     INSERT INTO game.map (
-        id,
-        map_id,
-        map_copy_id,
+        name,
+        description,
+        preview_link,
+        x, 
+        y,
+        pattern
+    ) VALUES (
+        name,
+        description,
+        preview_link,
         x,
         y,
-        area_type_id
-    )
-    VALUES (
-        (SELECT max(id) + 1 FROM game.area a WHERE a.map_id = map_id AND a.map_copy_id = map_copy_id),
-        map_id,
-        map_copy_id,
-        x,
-        y,
-        area_type_id
+        pattern
     )
     RETURNING id INTO ret_id;
 
     IF NOT FOUND THEN
-        RAISE 'Could not insert Area (%, %) of AreaType % for MapCopy %', x, y, area_type_id, map_copy_id;
+        RAISE 'Could not create Map %', name;
+    END IF;
+END;
+$$;
+
+
+-- TODO: trigger on DELETE from game.map to make dependant MapCopy objects safe
+
+-- Delete a map
+CREATE OR REPLACE FUNCTION game.delete_map(
+    map_id bigint
+) RETURNS VOID LANGUAGE plpgsql AS $$
+/*
+Assuming deleting is safe - all dependencies in MapCopy entities resolved.
+(this is implemented with a trigger on DELETE)
+Otherwise this function shouldn't be invoked
+*/
+BEGIN
+    DELETE FROM game.map
+    WHERE id = map_id; 
+    -- All the minor objects are removed with ON DELETE CASCADE
+
+    IF NOT FOUND THEN
+        RAISE 'Could not delete Map %', map_id;
     END IF;
 END;
 $$;
