@@ -267,9 +267,13 @@ CREATE TABLE game.item
 
 CREATE TABLE game.dropped_item
 (
-	id      bigserial PRIMARY KEY,
-	item_id bigint REFERENCES game.item(id) ON DELETE RESTRICT,
-	area_id bigint
+	id          bigserial PRIMARY KEY,
+	item_id     bigint    REFERENCES game.item(id)     ON DELETE RESTRICT,
+    map_id      bigint    REFERENCES game.map(id)      ON DELETE SET NULL,
+    map_copy_id bigint    REFERENCES game.map_copy(id) ON DELETE CASCADE,
+	area_id     bigint,
+
+    FOREIGN KEY (map_id, map_copy_id, area_id) REFERENCES game.area(map_id, map_copy_id, id)
 );
 
 CREATE TABLE game.prefix

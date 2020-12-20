@@ -145,7 +145,6 @@ $$;
 -- TODO: get all cells for a local map copy (copy exclusive)
 -- TODO: get all cells for a local map copy (original + copy override by (x,y))
 -- TODO: add object to a cell
--- TODO: short links
 
 -- Add a Short link (a link between cells)
 CREATE OR REPLACE FUNCTION game.create_short_link (
@@ -179,7 +178,6 @@ BEGIN
 END;
 $$;
 
-/*
 -- Delete a Short link (a link between cells)
 CREATE OR REPLACE FUNCTION game.delete_short_link(
 	_from_area_id     bigint,
@@ -192,18 +190,142 @@ CREATE OR REPLACE FUNCTION game.delete_short_link(
 BEGIN
     DELETE FROM game.link_short l
     WHERE
-        l.from_area_id = _from_area_id,
-        l.from_map_id = ,
-        l.from_map_copy_id,
-        l.to_area_id,
-        l.to_map_id,
-        l.to_map_copy_id
-      AND to_id   = l.to_map_id;
-    -- All the minor objects are removed with ON DELETE CASCADE
+            l.from_area_id     = _from_area_id
+        AND l.from_map_id      = _from_map_id
+        AND l.from_map_copy_id = _from_map_copy_id
+        AND l.to_area_id       = _to_area_id
+        AND l.to_map_id        = _to_map_id
+        AND l.to_map_copy_id   = _to_map_copy_id;
 
     IF NOT FOUND THEN
         RAISE 'Could not delete Long Link % -> %', from_id, to_id;
     END IF;
 END;
 $$;
-*/
+
+-- Get all Short Links for a map
+CREATE OR REPLACE FUNCTION game.get_map_short_links (
+        _map_id bigint
+) RETURNS TABLE (LIKE game.link_short) LANGUAGE plpgsql AS $$
+BEGIN
+    SELECT *
+    FROM game.link_short l
+    WHERE l.map_id = _map_id;
+END;
+$$;
+
+-- Add an object for a cell
+CREATE OR REPLACE FUNCTION game.add_object(
+            map_id         bigint,
+            map_copy_id    bigint,
+            area_id        bigint,
+            object_type_id integer,
+            orientation    float,
+        OUT ret_id         bigint
+) LANGUAGE plpgsql AS $$
+BEGIN
+    INSERT INTO game.object (
+        object_type_id,
+        area_id,
+        map_id,
+        map_copy_id,
+        orientation
+    )
+    VALUES (
+        object_type_id,
+        area_id,
+        map_id,
+        map_copy_id,
+        orientation
+    )
+    RETURNING id INTO ret_id;
+
+    IF NOT FOUND THEN
+        RAISE 'Could not create an Object of Type % for Area (%,%,%)',
+            object_type_id, map_id, map_copy_id, area_id;
+    END IF;
+END;
+$$;
+
+-- Delete an object
+CREATE OR REPLACE FUNCTION game.delete_short_link(
+    object_id bigint
+) RETURNS VOID LANGUAGE plpgsql AS $$
+BEGIN
+    DELETE FROM game.object o
+    WHERE o.id = object_id;
+
+    IF NOT FOUND THEN
+        RAISE 'Could not delete Object %', object_id;
+    END IF;
+END;
+$$;
+
+-- Get all Objects for a map
+CREATE OR REPLACE FUNCTION game.get_map_objects (
+        _map_id bigint
+) RETURNS TABLE (LIKE game.object) LANGUAGE plpgsql AS $$
+BEGIN
+    SELECT *
+    FROM game.object o
+    WHERE o.map_id = _map_id;
+END;
+$$;
+
+-- TODO: CRUD item
+
+-- Add a Dropped Item
+CREATE OR REPLACE FUNCTION game.add_dropped_item(
+            map_id      bigint,
+            map_copy_id bigint,
+            area_id     bigint,
+            item_id     bigint,
+            orientation float,
+        OUT ret_id      bigint
+) LANGUAGE plpgsql AS $$
+BEGIN
+    INSERT INTO game.dropped_item (
+        item_id,
+        map_id,
+        map_copy_id,
+        area_id
+    )
+    VALUES (
+        object_type_id,
+        map_id,
+        map_copy_id,
+        area_id
+    )
+    RETURNING id INTO ret_id;
+
+    IF NOT FOUND THEN
+        RAISE 'Could not create a Dropped Item for Item % for Area (%,%,%)',
+            item_id, map_id, map_copy_id, area_id;
+    END IF;
+END;
+$$;
+
+-- Delete a Dropped Item
+CREATE OR REPLACE FUNCTION game.delete_dropped_item(
+    d_item_id bigint
+) RETURNS VOID LANGUAGE plpgsql AS $$
+BEGIN
+    DELETE FROM game.dropped_item i
+    WHERE i.id = d_item_id;
+
+    IF NOT FOUND THEN
+        RAISE 'Could not delete Dropped Item %', d_item_id;
+    END IF;
+END;
+$$;
+
+-- Get all dropped items on map
+CREATE OR REPLACE FUNCTION game.get_map_dropped_items (
+        _map_id bigint
+) RETURNS TABLE (LIKE game.dropped_item) LANGUAGE plpgsql AS $$
+BEGIN
+    SELECT *
+    FROM game.dropped_item i
+    WHERE i.map_id = _map_id;
+END;
+$$;
