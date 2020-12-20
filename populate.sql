@@ -87,3 +87,5 @@ INSERT INTO common.user_profile (user_id, status, last_seen) VALUES
 */
 
 -- TODO
+
+-- game.area
