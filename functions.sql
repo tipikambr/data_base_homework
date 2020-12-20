@@ -53,9 +53,9 @@ $$;
 */
 
 CREATE OR REPLACE FUNCTION common.add_user_to_group (
-    user_id int,
-    group_id int
-) RETURNS VOID LANGUAGE SQL AS $$
+    user_id   int,
+    _group_id int
+) RETURNS VOID LANGUAGE plpgsql AS $$
 BEGIN
     INSERT INTO common.user_to_group (
         user_id, 
@@ -63,7 +63,7 @@ BEGIN
     )
     VALUES (
         user_id, 
-        group_id
+        _group_id
     );
 END;
 $$;
@@ -72,7 +72,7 @@ $$;
 CREATE OR REPLACE FUNCTION common.add_user_to_group (
     user_name text, 
     group_name text
-) RETURNS VOID LANGUAGE SQL AS $$
+) RETURNS VOID LANGUAGE plpgsql AS $$
 BEGIN
     INSERT INTO common.user_to_group (
         user_id, 
@@ -89,7 +89,7 @@ $$;
 CREATE OR REPLACE FUNCTION common.add_permission_to_group (
     permission_id int, 
     group_id int
-) RETURNS VOID LANGUAGE SQL AS $$
+) RETURNS VOID LANGUAGE plpgsql AS $$
 BEGIN
     INSERT INTO common.permission_to_group (
         group_id, 
@@ -105,7 +105,7 @@ $$;
 CREATE OR REPLACE FUNCTION common.add_permission_to_group (
     permission_name text, 
     group_name text
-) RETURNS VOID LANGUAGE SQL AS $$
+) RETURNS VOID LANGUAGE plpgsql AS $$
 BEGIN
     INSERT INTO common.permission_to_group (
         group_id, 
@@ -121,7 +121,8 @@ $$;
     
 CREATE OR REPLACE FUNCTION common.get_all_permissions (
     id_user int
-) RETURNS TABLE (LIKE common.permission) LANGUAGE SQL AS $$
+) RETURNS TABLE (LIKE common.permission) LANGUAGE plpgsql AS $$
+BEGIN
     SELECT * FROM common.permission
     WHERE EXISTS (
         SELECT * FROM
@@ -148,7 +149,7 @@ CREATE OR REPLACE FUNCTION game.create_game(
     _is_active   bool,
     _map_id      bigint,
     _description text
-) RETURNS VOID LANGUAGE SQL AS $$
+) RETURNS VOID LANGUAGE plpgsql AS $$
 BEGIN
     INSERT INTO game.game (name,
         status,
@@ -171,18 +172,18 @@ BEGIN
     ) VALUES (      -- WTF is this? 5 inner queries?? The 4 last queries sample from the same record!
         -- TODO: fix this bullshit
         _map_id,
-        SELECT id           FROM game.game WHERE _name = name AND _id = owner_id,
-        SELECT name         FROM game.map  WHERE id    = _map_id,
-        SELECT preview_link FROM game.map  WHERE id    = _map_id,
-        SELECT x            FROM game.map  where id    = _map_id,
-        SELECT y            FROM game.map  where id    = _map_id
+        (SELECT id           FROM game.game WHERE _name = name AND _id = owner_id),
+        (SELECT name         FROM game.map  WHERE id    = _map_id),
+        (SELECT preview_link FROM game.map  WHERE id    = _map_id),
+        (SELECT x            FROM game.map  where id    = _map_id),
+        (SELECT y            FROM game.map  where id    = _map_id)
     );
         
     INSERT INTO common.participant (
         game_id,
         user_id
     ) VALUES (
-        SELECT id FROM game.game WHERE _name = name AND _id = owner_id,
+        (SELECT id FROM game.game g WHERE _name = g.name AND _id = g.owner_id LIMIT 1), -- WTF is this query? There is no unique constraint on  (name, owner_id)! Too bad!
         _id
     );
 END;
@@ -190,7 +191,7 @@ $$;
 
 -- List of Games
 CREATE OR REPLACE FUNCTION game.get_games (
-) RETURNS TABLE (LIKE game.game) LANGUAGE SQL AS $$
+) RETURNS TABLE (LIKE game.game) LANGUAGE plpgsql AS $$
 BEGIN
     SELECT * FROM game.game;
 END;
@@ -201,7 +202,7 @@ $$;
 -- FIXME: these 100 lines should be replaced with a couple of DELETE CASCADE queries
 CREATE OR REPLACE FUNCTION game.delete_game(
     g_id bigint
-) RETURNS VOID LANGUAGE SQL AS $$
+) RETURNS VOID LANGUAGE plpgsql AS $$
 BEGIN
     DELETE FROM game.effect_instance
     WHERE character_id IN (
@@ -316,7 +317,7 @@ $$;
 -- List of players in game
 CREATE OR REPLACE FUNCTION game.get_players_in_game_list(
     _id int
-) RETURNS TABLE (LIKE common.user) LANGUAGE SQL AS $$
+) RETURNS TABLE (LIKE common.user) LANGUAGE plpgsql AS $$
 BEGIN
     SELECT * FROM common.user u
     WHERE u.id IN (
@@ -331,7 +332,7 @@ $$;
 CREATE OR REPLACE FUNCTION game.user_connect_game(
     u_id int,
     g_id bigint
-) RETURNS VOID LANGUAGE SQL AS $$
+) RETURNS VOID LANGUAGE plpgsql AS $$
 BEGIN
     INSERT INTO common.participant (
         game_id,
@@ -347,7 +348,7 @@ $$;
 CREATE OR REPLACE FUNCTION game.get_characters_in_game_list(
     u_id int,
     g_id bigint
-) RETURNS TABLE (LIKE game.character) LANGUAGE SQL AS $$
+) RETURNS TABLE (LIKE game.character) LANGUAGE plpgsql AS $$
 BEGIN
     SELECT * FROM game.character x
     WHERE x.id IN (
@@ -364,7 +365,7 @@ CREATE OR REPLACE FUNCTION game.create_character (
     g_id         bigint,
     _name        text,
     _avatar_link text
-) RETURNS VOID LANGUAGE SQL AS $$
+) RETURNS VOID LANGUAGE plpgsql AS $$
 BEGIN
     INSERT INTO game.character (
         game_id,
@@ -384,23 +385,24 @@ $$;
 CREATE OR REPLACE FUNCTION game.change_character_avatar(
     _id          int,
     _avatar_link text
-) RETURNS VOID LANGUAGE SQL AS $$
+) RETURNS VOID LANGUAGE plpgsql AS $$
 BEGIN
     UPDATE game.character
     SET    avatar_link = _avatar_link
-    WHERE  id = _id
+    WHERE  id = _id;
 END;
 $$;
 
 -- Change character name
-CREATE OR REPLACE FUNCTION game.change_character_avatar(
+-- Couldn't you just test these functions to get them at least compiling?...
+CREATE OR REPLACE FUNCTION game.change_character_name(
     _id   int,
     _name text
-) RETURNS VOID LANGUAGE SQL AS $$
+) RETURNS VOID LANGUAGE plpgsql AS $$
 BEGIN
     UPDATE game.character
     SET    name = _name
-    WHERE  id   = _id
+    WHERE  id   = _id;
 END;
 $$;
 
@@ -472,7 +474,7 @@ CREATE OR REPLACE FUNCTION game.add_map(
             x            integer,
             y            integer,
             preview_link text,
-            pattern      integer
+            pattern      integer,
         OUT ret_id       bigint
 ) LANGUAGE plpgsql AS $$
 BEGIN

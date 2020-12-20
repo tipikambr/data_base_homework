@@ -59,7 +59,7 @@ INSERT INTO game.game (name, owner_id) VALUES
     ('Game2', 4);
 
 -- participants
-INSERT INTO common.participant (game_id, user_id) VALUES
+INSERT INTO common.participant (session_id, user_id) VALUES
     (1, 1),
     (1, 2),
     (2, 3),
@@ -67,7 +67,7 @@ INSERT INTO common.participant (game_id, user_id) VALUES
     (2, 1);
 
 -- Characters
-INSERT INTO game.character (game_id, user_id, name) VALUES
+INSERT INTO game.character (session_id, user_id, name) VALUES
     (1, 1, 'Thor'),
     (1, 2, 'Odin'),
     (1, 1, 'GLaDOS'), 

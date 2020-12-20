@@ -60,6 +60,25 @@ CREATE TABLE game.game
     owner_id integer REFERENCES common.USER(id)
 );
 
+CREATE TABLE game.map
+(
+    id           bigserial PRIMARY KEY,
+    name         text,
+    description  text,
+    preview_link text,
+    x            float,
+    y            float,
+	pattern      integer
+);
+
+CREATE TABLE game.game_session
+(
+    id      bigserial PRIMARY KEY,
+    master  bigint    REFERENCES common.user(id),
+    active  boolean,
+    game_id bigint    REFERENCES game.game(id)
+);
+
 CREATE TABLE game.character
 (
     id          bigserial PRIMARY KEY,
@@ -84,25 +103,6 @@ CREATE TABLE game.trait_value
     character_id bigint REFERENCES game.character(id),
     value        integer,
     PRIMARY KEY (id, trait_id)
-);
-
-CREATE TABLE game.map
-(
-    id           bigserial PRIMARY KEY,
-    name         text,
-    description  text,
-    preview_link text,
-    x            float,
-    y            float,
-	pattern      integer
-);
-
-CREATE TABLE game.game_session
-(
-    id      bigserial PRIMARY KEY,
-    master  bigint    REFERENCES game.user(id),
-    active  boolean,
-    game_id bigint    REFERENCES game.game(id)
 );
 
 CREATE TABLE common.participant
