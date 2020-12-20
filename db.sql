@@ -55,10 +55,11 @@ CREATE TABLE common.permission_to_group
 
 CREATE TABLE game.game
 (
-    id       bigserial PRIMARY KEY,
-    name     text,
-    status   boolean,
-    owner_id integer REFERENCES common.USER(id) ON DELETE SET NULL
+    id          bigserial PRIMARY KEY,
+    name        text,
+    description text,
+    status      boolean,
+    owner_id    integer REFERENCES common.USER(id) ON DELETE SET NULL
 );
 
 CREATE TABLE game.map
@@ -70,6 +71,12 @@ CREATE TABLE game.map
     x            float,
     y            float,
 	pattern      integer
+);
+
+CREATE TABLE game.game_to_map
+(
+    game_id bigint REFERENCES game.game ON DELETE CASCADE,
+    map     bigint REFERENCES game.map  ON DELETE CASCADE
 );
 
 CREATE TABLE game.game_session
@@ -222,7 +229,7 @@ CREATE TABLE game.link_long
 (
 	from_map_id bigint REFERENCES game.map(id) ON DELETE SET NULL,
 	to_map_id   bigint REFERENCES game.map(id) ON DELETE SET NULL,
-	PRIMARY     KEY (from_map_id, to_map_id)
+	PRIMARY KEY (from_map_id, to_map_id)
 );
 
 CREATE TABLE game.object_type

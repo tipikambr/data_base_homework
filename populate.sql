@@ -31,7 +31,7 @@ INSERT INTO common.group (name) VALUES
 ('user');
 
 -- Characters
-INSERT INTO game.character (game_id, user_id, name) VALUES
+INSERT INTO game.character (session_id, user_id, name) VALUES
 (1, 1, 'Thor'),
 (1, 2, 'Odin'),
 (1, 1, 'GLaDOS'),
